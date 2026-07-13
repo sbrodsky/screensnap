@@ -1,13 +1,13 @@
-# Hotkey Change: F8 → CTRL-SHIFT-N
+# Hotkey Change: F8 → CTRL-ALT-K
 
 ## What Changed
 
-The screenshot hotkey has been changed from **F8** to **CTRL-SHIFT-N** to prevent accidental triggering.
+The screenshot hotkey has been changed from **F8** to **CTRL-ALT-K** to prevent accidental triggering.
 
 ### Why This Change?
 
 - **F8** can be easily triggered accidentally, especially in gaming or while using other applications
-- **CTRL-SHIFT-N** is a deliberate three-key combination that's much less likely to be pressed accidentally
+- **CTRL-ALT-K** is a deliberate three-key combination that's much less likely to be pressed accidentally
 - The new combination requires conscious intent to trigger a screenshot
 
 ## Code Changes
@@ -18,13 +18,13 @@ The screenshot hotkey has been changed from **F8** to **CTRL-SHIFT-N** to preven
    - Added modifier key tracking:
      ```java
      private static boolean ctrlPressed = false;
-     private static boolean shiftPressed = false;
+     private static boolean altPressed = false;
      ```
-   - Updated key listener to detect CTRL-SHIFT-N combination
-   - Updated tray icon tooltip from "F8 to capture" to "CTRL-SHIFT-N to capture"
+   - Updated key listener to detect CTRL-ALT-K combination
+   - Updated tray icon tooltip from "F8 to capture" to "CTRL-ALT-K to capture"
 
 2. **`README.md`**
-   - Updated all references from F8 to CTRL-SHIFT-N
+   - Updated all references from F8 to CTRL-ALT-K
    - Updated usage instructions
    - Updated troubleshooting section
 
@@ -33,9 +33,9 @@ The screenshot hotkey has been changed from **F8** to **CTRL-SHIFT-N** to preven
 The new hotkey uses a three-key combination:
 
 1. When **CTRL** is pressed → `ctrlPressed = true`
-2. When **SHIFT** is pressed → `shiftPressed = true`
-3. When **N** is pressed AND both `ctrlPressed` and `shiftPressed` are true → trigger screenshot
-4. When **CTRL** or **SHIFT** is released → set corresponding flag to false
+2. When **ALT** is pressed → `altPressed = true`
+3. When **K** is pressed AND both `ctrlPressed` and `altPressed` are true → trigger screenshot
+4. When **CTRL** or **ALT** is released → set corresponding flag to false
 
 This ensures the hotkey only triggers when all three keys are intentionally pressed together.
 
@@ -68,7 +68,7 @@ mvn clean package
 java -jar target/ScreenSnap.jar
 ```
 
-Then press **CTRL-SHIFT-N** to capture a screenshot.
+Then press **CTRL-ALT-K** to capture a screenshot.
 
 ## Customizing the Hotkey
 
@@ -78,8 +78,8 @@ If you want to use a different hotkey:
 2. Find the `nativeKeyListener` section (around line 67)
 3. Modify the key codes:
    - Replace `NativeKeyEvent.VC_CONTROL` with a different modifier (e.g., `NativeKeyEvent.VC_ALT`)
-   - Replace `NativeKeyEvent.VC_SHIFT` with another modifier or remove it
-   - Replace `NativeKeyEvent.VC_N` with a different letter key (e.g., `VC_S` for S key)
+   - Replace `NativeKeyEvent.VC_ALT` with another modifier or remove it
+   - Replace `NativeKeyEvent.VC_K` with a different letter key (e.g., `VC_S` for S key)
 4. Rebuild with `mvn clean package`
 
 ### Common Key Code Examples
@@ -106,7 +106,7 @@ if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
 After rebuilding, verify the hotkey works:
 
 1. Start the application: `java -jar target/ScreenSnap.jar`
-2. Press **CTRL-SHIFT-N** anywhere
+2. Press **CTRL-ALT-K** anywhere
 3. The crosshair selection overlay should appear
 4. Select area and take a screenshot
 

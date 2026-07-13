@@ -84,7 +84,7 @@ java -jar target/ScreenSnap.jar
 ### When Running:
 - No console window needed
 - A system tray icon should appear (if supported on your OS)
-- Press F8 anywhere to capture a screenshot
+- Press CTRL-ALT-K anywhere to capture a screenshot
 - A crosshair overlay appears
 - Select area by dragging
 - Screenshot saved to Desktop as `ScreenSnap_YYYYMMDD_HHmmss.png`
@@ -99,7 +99,7 @@ java -jar target/ScreenSnap.jar
 | Build fails | Check internet connection, then try `mvn clean package -U` |
 | ClassNotFoundException still occurs | Delete `target` folder and rebuild: `mvn clean package` |
 | Permission denied on .ps1 scripts | Run PowerShell as Administrator first |
-| F8 hotkey doesn't work | Some apps/games may capture F8 first. Try a different hotkey (requires code change). |
+| CTRL-ALT-K hotkey doesn't work | Some apps/games may intercept the hotkey. Try a different combination if needed. |
 
 ---
 
@@ -110,7 +110,7 @@ java -jar target/ScreenSnap.jar
 - JAR file created at `target/ScreenSnap.jar` (~675 KB)
 - Application starts without ClassNotFoundException
 - System tray icon appears (Windows/Mac typically)
-- F8 hotkey triggers screenshot mode
+- CTRL-ALT-K hotkey triggers screenshot mode
 
 ---
 

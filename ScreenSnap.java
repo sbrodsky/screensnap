@@ -16,6 +16,10 @@ public class ScreenSnap {
     // Keep a reference to the system tray icon so we can show notifications later
     private static TrayIcon trayIcon = null;
 
+    // Track modifier key states for CTRL-ALT-K hotkey
+    private static boolean ctrlPressed = false;
+    private static boolean altPressed = false;
+
     public static void main(String[] args) throws Exception {
         System.setProperty("apple.awt.UIElement", "true");
 
@@ -39,7 +43,7 @@ public class ScreenSnap {
             SystemTray tray = SystemTray.getSystemTray();
             trayIcon = new TrayIcon(
                     createTrayImage(),
-                    "ScreenSnap (F8 to capture)",
+                    "ScreenSnap (CTRL-ALT-K to capture)",
                     new PopupMenu() {{
                         add(new MenuItem("Exit") {{
                             addActionListener(e -> System.exit(0));
@@ -57,17 +61,28 @@ public class ScreenSnap {
             }
         }
 
-        // Global F8 listener
+        // Global hotkey listener for CTRL-ALT-K
         GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
             @Override
             public void nativeKeyPressed(NativeKeyEvent e) {
-                if (e.getRawCode() == NativeKeyEvent.VC_F8 ||
-                        e.getKeyCode() == NativeKeyEvent.VC_F8) {
+                if (e.getKeyCode() == NativeKeyEvent.VC_CONTROL) {
+                    ctrlPressed = true;
+                } else if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
+                    altPressed = true;
+                } else if (e.getKeyCode() == NativeKeyEvent.VC_K && ctrlPressed && altPressed) {
                     showSelectionOverlay();
                 }
             }
 
-            @Override public void nativeKeyReleased(NativeKeyEvent e) {}
+            @Override
+            public void nativeKeyReleased(NativeKeyEvent e) {
+                if (e.getKeyCode() == NativeKeyEvent.VC_CONTROL) {
+                    ctrlPressed = false;
+                } else if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
+                    altPressed = false;
+                }
+            }
+
             @Override public void nativeKeyTyped(NativeKeyEvent e) {}
         });
     }

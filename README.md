@@ -1,6 +1,6 @@
 # ScreenSnap
 
-A lightweight screenshot utility with global hotkey support (CTRL-SHIFT-N) and system tray integration.
+A lightweight screenshot utility with global hotkey support (CTRL-ALT-K) and system tray integration.
 
 ## Project Structure
 
@@ -17,7 +17,7 @@ screensnap/
 
 ## Features
 
-- Press **CTRL-SHIFT-N** globally to trigger screenshot capture
+- Press **CTRL-ALT-K** globally to trigger screenshot capture
 - Select area with crosshair overlay (3:4 aspect ratio)
 - Auto-saves to Desktop with timestamp
 - System tray integration with notifications
@@ -60,13 +60,13 @@ mvn compile exec:java -Dexec.mainClass="ScreenSnap"
 
 ## Dependencies
 
-- **jnativehook** (2.2.4) - Global keyboard hook for CTRL-SHIFT-N hotkey detection
+- **jnativehook** (2.2.4) - Global keyboard hook for CTRL-ALT-K hotkey detection
 - Java AWT/Swing - For GUI and screenshot capture
 
 ## How to Use
 
 1. Start the application - a tray icon should appear
-2. Press **CTRL-SHIFT-N** anywhere on your screen
+2. Press **CTRL-ALT-K** anywhere on your screen
 3. A crosshair overlay will appear - drag to select the area to capture
 4. Release mouse to save the screenshot
 5. Right-click to cancel the selection, or press **ESC**
@@ -80,7 +80,7 @@ This means Maven dependencies haven't been downloaded yet. Run:
 mvn clean package
 ```
 
-### CTRL-SHIFT-N hotkey not working
+### CTRL-ALT-K hotkey not working
 - On Linux, you may need appropriate permissions for global keyboard hooks
 - Ensure jnativehook is properly installed by checking the build output
 - Some desktop environments or applications may intercept the hotkey
@@ -88,7 +88,7 @@ mvn clean package
 
 ### Tray icon not showing
 - System tray may not be supported on your OS (e.g., some Linux desktop environments)
-- The application will still work - just use the CTRL-SHIFT-N hotkey
+- The application will still work - just use the CTRL-ALT-K hotkey
 
 ## Architecture
 

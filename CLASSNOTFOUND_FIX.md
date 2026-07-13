@@ -54,7 +54,7 @@ mvn clean package
 java -jar target/ScreenSnap.jar
 ```
 
-The application should now start successfully with the global F8 hotkey listener and system tray integration.
+The application should now start successfully with the global CTRL-ALT-K hotkey listener and system tray integration.
 
 ## Project Structure
 

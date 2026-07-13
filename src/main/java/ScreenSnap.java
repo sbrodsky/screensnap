@@ -18,9 +18,9 @@ public class ScreenSnap {
     // Keep a reference to the system tray icon so we can show notifications later
     private static TrayIcon trayIcon = null;
 
-    // Track modifier key states for CTRL-SHIFT-N hotkey
+    // Track modifier key states for CTRL-ALT-K hotkey
     private static boolean ctrlPressed = false;
-    private static boolean shiftPressed = false;
+    private static boolean altPressed = false;
 
     public static void main(String[] args) throws Exception {
         System.setProperty("apple.awt.UIElement", "true");
@@ -45,7 +45,7 @@ public class ScreenSnap {
             SystemTray tray = SystemTray.getSystemTray();
             trayIcon = new TrayIcon(
                     createTrayImage(),
-                    "ScreenSnap (CTRL-SHIFT-N to capture)",
+                    "ScreenSnap (CTRL-ALT-K to capture)",
                     new PopupMenu() {{
                         add(new MenuItem("Exit") {{
                             addActionListener(e -> System.exit(0));
@@ -63,17 +63,17 @@ public class ScreenSnap {
             }
         }
 
-        // Global hotkey listener for CTRL-SHIFT-N
+        // Global hotkey listener for CTRL-ALT-K
         GlobalScreen.addNativeKeyListener(new NativeKeyListener() {
             @Override
             public void nativeKeyPressed(NativeKeyEvent e) {
                 // Track modifier keys
                 if (e.getKeyCode() == NativeKeyEvent.VC_CONTROL) {
                     ctrlPressed = true;
-                } else if (e.getKeyCode() == NativeKeyEvent.VC_SHIFT) {
-                    shiftPressed = true;
-                } else if (e.getKeyCode() == NativeKeyEvent.VC_N && ctrlPressed && shiftPressed) {
-                    // CTRL-SHIFT-N pressed - trigger screenshot
+                } else if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
+                    altPressed = true;
+                } else if (e.getKeyCode() == NativeKeyEvent.VC_K && ctrlPressed && altPressed) {
+                    // CTRL-ALT-K pressed - trigger screenshot
                     showSelectionOverlay();
                 }
             }
@@ -83,8 +83,8 @@ public class ScreenSnap {
                 // Track modifier key releases
                 if (e.getKeyCode() == NativeKeyEvent.VC_CONTROL) {
                     ctrlPressed = false;
-                } else if (e.getKeyCode() == NativeKeyEvent.VC_SHIFT) {
-                    shiftPressed = false;
+                } else if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
+                    altPressed = false;
                 }
             }
 
