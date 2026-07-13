@@ -133,7 +133,7 @@ public class ScreenSnap {
     }
 
     // -----------------------------------------------------------------------
-    // Overlay window (same as before)
+    // Overlay window (MODIFIED: pre-displayed centered box, drag to move, mouse release to capture)
     // -----------------------------------------------------------------------
     static class SelectionOverlay extends JWindow {
 
@@ -141,10 +141,11 @@ public class ScreenSnap {
         private final Rectangle virtualBounds;
         private final Runnable onClosed;
 
-        private Point startPoint;
+        private Point dragStartPoint;
         private Rectangle selection;
+        private boolean isDragging = false;
 
-        private static final double ASPECT_RATIO = 3.0 / 4.0; // or 0.74
+        private static final double ASPECT_RATIO = 3.0 / 4.0;
 
         SelectionOverlay(BufferedImage screenshot, Rectangle virtualBounds, Runnable onClosed) {
             this.screenshot    = screenshot;
@@ -153,6 +154,13 @@ public class ScreenSnap {
 
             setAlwaysOnTop(true);
             setBounds(virtualBounds);
+
+            // Initialize selection box centered on screen
+            int boxWidth = Math.min(400, virtualBounds.width / 2);
+            int boxHeight = (int) (boxWidth / ASPECT_RATIO);
+            int centerX = virtualBounds.x + (virtualBounds.width - boxWidth) / 2;
+            int centerY = virtualBounds.y + (virtualBounds.height - boxHeight) / 2;
+            selection = new Rectangle(centerX, centerY, boxWidth, boxHeight);
 
             JPanel canvas = new JPanel() {
                 @Override
@@ -177,6 +185,16 @@ public class ScreenSnap {
                         g2.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT,
                                 BasicStroke.JOIN_MITER, 1, new float[]{6, 3}, 0));
                         g2.draw(selection);
+
+                        // Draw resize handles at corners
+                        g2.setColor(new Color(255, 200, 0));
+                        g2.setStroke(new BasicStroke(3));
+                        int handleSize = 8;
+                        g2.fillRect(selection.x - handleSize/2, selection.y - handleSize/2, handleSize, handleSize);
+                        g2.fillRect(selection.x + selection.width - handleSize/2, selection.y - handleSize/2, handleSize, handleSize);
+                        g2.fillRect(selection.x - handleSize/2, selection.y + selection.height - handleSize/2, handleSize, handleSize);
+                        g2.fillRect(selection.x + selection.width - handleSize/2, selection.y + selection.height - handleSize/2, handleSize, handleSize);
+
                         g2.dispose();
                     }
                 }
@@ -185,19 +203,55 @@ public class ScreenSnap {
             canvas.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 
             MouseAdapter ma = new MouseAdapter() {
-                @Override public void mousePressed(MouseEvent e) {
-                    if (SwingUtilities.isRightMouseButton(e)) { dispose(); return; }
-                    startPoint = e.getPoint();
-                    selection  = null;
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (SwingUtilities.isRightMouseButton(e)) {
+                        dispose();
+                        return;
+                    }
+                    // Check if clicking inside selection box
+                    if (selection != null && selection.contains(e.getPoint())) {
+                        isDragging = true;
+                        dragStartPoint = e.getPoint();
+                    } else {
+                        // Clicking outside - start new selection from click point
+                        isDragging = false;
+                        dragStartPoint = e.getPoint();
+                        selection = null;
+                    }
                 }
 
-                @Override public void mouseDragged(MouseEvent e) {
-                    selection = normalizeRectWithAspectRatio(startPoint, e.getPoint(), canvas.getBounds());
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (isDragging && selection != null) {
+                        // Move the existing selection box
+                        int dx = e.getX() - dragStartPoint.x;
+                        int dy = e.getY() - dragStartPoint.y;
+
+                        int newX = selection.x + dx;
+                        int newY = selection.y + dy;
+
+                        // Constrain to screen bounds
+                        newX = Math.max(virtualBounds.x, Math.min(newX, virtualBounds.x + virtualBounds.width - selection.width));
+                        newY = Math.max(virtualBounds.y, Math.min(newY, virtualBounds.y + virtualBounds.height - selection.height));
+
+                        selection.setLocation(newX, newY);
+                        dragStartPoint = e.getPoint();
+                    } else {
+                        // Creating new selection
+                        selection = normalizeRectWithAspectRatio(dragStartPoint, e.getPoint(), canvas.getBounds());
+                    }
                     canvas.repaint();
                 }
 
-                @Override public void mouseReleased(MouseEvent e) {
-                    if (SwingUtilities.isRightMouseButton(e)) return;
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    if (SwingUtilities.isRightMouseButton(e)) {
+                        isDragging = false;
+                        return;
+                    }
+                    isDragging = false;
+                    // Capture on left mouse button release after selection
                     if (selection != null && selection.width > 2 && selection.height > 2) {
                         dispose();
                         captureAndSave(selection);
@@ -208,10 +262,14 @@ public class ScreenSnap {
             canvas.addMouseListener(ma);
             canvas.addMouseMotionListener(ma);
 
+            // Keyboard shortcuts: ESC to cancel
             canvas.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                     .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
             canvas.getActionMap().put("cancel", new AbstractAction() {
-                @Override public void actionPerformed(ActionEvent e) { dispose(); }
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    dispose();
+                }
             });
 
             addWindowListener(new WindowAdapter() {
@@ -310,4 +368,3 @@ public class ScreenSnap {
         }
     }
 }
-
