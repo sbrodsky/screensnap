@@ -283,8 +283,11 @@ public class ScreenSnap {
 
                 String ts = LocalDateTime.now()
                         .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-                String desktop = System.getProperty("user.home") + File.separator + "Desktop";
-                File out = new File(desktop, "ScreenSnap_" + ts + ".png");
+                File downloadsDir = new File(System.getProperty("user.home"), "Downloads");
+                if (!downloadsDir.exists() && !downloadsDir.mkdirs()) {
+                    throw new IOException("Unable to create Downloads directory: " + downloadsDir.getAbsolutePath());
+                }
+                File out = new File(downloadsDir, "ScreenSnap_" + ts + ".png");
 
                 ImageIO.write(capture, "PNG", out);
 
