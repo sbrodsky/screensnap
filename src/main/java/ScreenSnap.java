@@ -22,6 +22,8 @@ public class ScreenSnap {
     // Track modifier key states for CTRL-ALT-K hotkey
     private static boolean ctrlPressed = false;
     private static boolean altPressed = false;
+    private static boolean waitingForSecondHotkey = false;
+    private static SelectionOverlay activeOverlay = null;
 
     public static void main(String[] args) throws Exception {
         System.setProperty("apple.awt.UIElement", "true");
@@ -46,7 +48,7 @@ public class ScreenSnap {
             SystemTray tray = SystemTray.getSystemTray();
             trayIcon = new TrayIcon(
                     createTrayImage(),
-                    "ScreenSnap (CTRL-ALT-K to capture)",
+                    "ScreenSnap (CTRL-ALT-K twice to capture)",
                     new PopupMenu() {{
                         add(new MenuItem("Exit") {{
                             addActionListener(e -> System.exit(0));
@@ -74,8 +76,12 @@ public class ScreenSnap {
                 } else if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
                     altPressed = true;
                 } else if (e.getKeyCode() == NativeKeyEvent.VC_K && ctrlPressed && altPressed) {
-                    // CTRL-ALT-K pressed - trigger screenshot
-                    showSelectionOverlay();
+                    if (waitingForSecondHotkey && activeOverlay != null) {
+                        activeOverlay.confirmSelection();
+                    } else {
+                        waitingForSecondHotkey = true;
+                        showSelectionOverlay();
+                    }
                 }
             }
 
@@ -113,10 +119,11 @@ public class ScreenSnap {
             Rectangle virtualBounds = getVirtualScreenBounds();
             BufferedImage fullScreen = robot.createScreenCapture(virtualBounds);
 
-            SelectionOverlay overlay = new SelectionOverlay(fullScreen, virtualBounds, () -> {
-                // Nothing special needed when closed
+            activeOverlay = new SelectionOverlay(fullScreen, virtualBounds, () -> {
+                activeOverlay = null;
+                waitingForSecondHotkey = false;
             });
-            overlay.show();
+            activeOverlay.show();
         } catch (AWTException e) {
             JOptionPane.showMessageDialog(null,
                     "Error preparing selection overlay:\n" + e.getMessage(),
@@ -156,12 +163,8 @@ public class ScreenSnap {
             setAlwaysOnTop(true);
             setBounds(virtualBounds);
 
-            // Initialize selection box centered on screen
-            int boxWidth = Math.min(400, virtualBounds.width / 2);
-            int boxHeight = (int) (boxWidth / ASPECT_RATIO);
-            int centerX = virtualBounds.x + (virtualBounds.width - boxWidth) / 2;
-            int centerY = virtualBounds.y + (virtualBounds.height - boxHeight) / 2;
-            selection = new Rectangle(centerX, centerY, boxWidth, boxHeight);
+            // Start with no selection until the user drags to define one
+            selection = null;
 
             JPanel canvas = new JPanel() {
                 @Override
@@ -207,15 +210,15 @@ public class ScreenSnap {
                 @Override
                 public void mousePressed(MouseEvent e) {
                     if (SwingUtilities.isRightMouseButton(e)) {
-                        dispose();
+                        closeOverlay();
                         return;
                     }
-                    // Check if clicking inside selection box
+                    // Start dragging inside the current selection to move it,
+                    // or outside it to define a new selection region.
                     if (selection != null && selection.contains(e.getPoint())) {
                         isDragging = true;
                         dragStartPoint = e.getPoint();
                     } else {
-                        // Clicking outside - start new selection from click point
                         isDragging = false;
                         dragStartPoint = e.getPoint();
                         selection = null;
@@ -239,7 +242,7 @@ public class ScreenSnap {
                         selection.setLocation(newX, newY);
                         dragStartPoint = e.getPoint();
                     } else {
-                        // Creating new selection
+                        // Creating or updating a new selection from the drag start point
                         selection = normalizeRectWithAspectRatio(dragStartPoint, e.getPoint(), canvas.getBounds());
                     }
                     canvas.repaint();
@@ -252,10 +255,9 @@ public class ScreenSnap {
                         return;
                     }
                     isDragging = false;
-                    // Capture on left mouse button release after selection
+                    // Do not capture on mouse release; wait for the second hotkey press.
                     if (selection != null && selection.width > 2 && selection.height > 2) {
-                        dispose();
-                        captureAndSave(selection);
+                        canvas.repaint();
                     }
                 }
             };
@@ -264,12 +266,15 @@ public class ScreenSnap {
             canvas.addMouseMotionListener(ma);
 
             // Keyboard shortcuts: ESC to cancel
+            canvas.setFocusable(true);
+            SwingUtilities.invokeLater(canvas::requestFocusInWindow);
+
             canvas.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                     .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
             canvas.getActionMap().put("cancel", new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    dispose();
+                    closeOverlay();
                 }
             });
 
@@ -281,6 +286,17 @@ public class ScreenSnap {
             });
 
             setContentPane(canvas);
+        }
+
+        void confirmSelection() {
+            if (selection != null && selection.width > 2 && selection.height > 2) {
+                closeOverlay();
+                captureAndSave(selection);
+            }
+        }
+
+        private void closeOverlay() {
+            dispose();
         }
 
         private Rectangle normalizeRectWithAspectRatio(Point a, Point b, Rectangle canvasBounds) {
